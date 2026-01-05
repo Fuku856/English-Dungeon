@@ -170,6 +170,18 @@ class AudioManager {
             ];
             vol = 0.4;
             wave = 'triangle';
+        } else if (type === 'title') {
+            // Bright, Upbeat, RPG Main Menu Style
+            // Major scale arpeggio or simple melody
+            speed = 180;
+            pattern = [
+                523.25, 659.25, 783.99, 1046.50, // C E G C
+                880.00, 1046.50, 783.99, 659.25, // A C G E
+                587.33, 783.99, 987.77, 1174.66, // D G B D
+                1046.50, 0, 783.99, 0            // C - G -
+            ];
+            vol = 0.3;
+            wave = 'square';
         }
 
         let noteIndex = 0;
@@ -364,6 +376,8 @@ class Game {
         this.map = [];
         this.floor = 1;
         this.battle = null;
+        this.audioInitialized = false;
+        this.blinkTimer = 0;
     }
 
     start() {
@@ -395,26 +409,35 @@ class Game {
 
     update(dt) {
         if (this.state === 'TITLE') {
-            if (this.input.justTouched) {
-                // Check "GAME START" button (approximate coords)
-                if (this.checkButton(80, 200, 160, 40)) {
+            this.blinkTimer += dt;
+
+            if (!this.audioInitialized) {
+                // Wait for any interaction to init audio
+                if (this.input.justTouched || this.input.isJustPressed('a') || this.input.isJustPressed('b')) {
                     this.audio.init();
+                    this.audio.startBgm('title');
+                    this.audioInitialized = true;
+                    this.blinkTimer = 0;
+                }
+            } else {
+                // Main Title Menu
+                if (this.input.justTouched) {
+                    // Check "GAME START" button (approximate coords)
+                    if (this.checkButton(60, 240, 200, 50)) {
+                        this.audio.playSelect();
+                        this.state = 'EXPLORE';
+                        this.toggleControls(true);
+                        this.audio.startBgm('dungeon');
+                        this.setMessage("DUNGEON START! Floor 1");
+                    }
+                }
+                if (this.input.isJustPressed('a')) {
                     this.audio.playSelect();
                     this.state = 'EXPLORE';
                     this.toggleControls(true);
                     this.audio.startBgm('dungeon');
                     this.setMessage("DUNGEON START! Floor 1");
                 }
-            }
-            // Keep keyboard "A" for debug/convenience if desired, or remove to strictly follow "no controller"
-            // Adding keyboard support for Start as backup
-            if (this.input.isJustPressed('a')) {
-                this.audio.init();
-                this.audio.playSelect();
-                this.state = 'EXPLORE';
-                this.toggleControls(true);
-                this.audio.startBgm('dungeon');
-                this.setMessage("DUNGEON START! Floor 1");
             }
         }
         else if (this.state === 'EXPLORE') {
@@ -444,6 +467,10 @@ class Game {
                 else if (this.checkButton(80, 260, 160, 40)) { // Menu
                     this.audio.playCancel();
                     this.state = 'TITLE';
+                    this.audioInitialized = false; // Reset to force re-interaction or just go to menu? Let's go to menu but keep audio if possible.
+                    // Actually, better to keep audio running or switch to title track immediately
+                    this.audio.startBgm('title');
+                    this.audioInitialized = true; // Audio context is alrdy running
                     this.toggleControls(false);
                     // Reset Game Data?
                     this.player.level = 1;
@@ -870,14 +897,63 @@ class Game {
     }
 
     drawTitle() {
-        this.renderer.drawText("ENGLISH DUNGEON", 160, 100, COLORS.GREEN, 32, 'center');
+        // 1. Draw Background (Tiled Floor)
+        const c = 32;
+        for (let y = 0; y < 10; y++) {
+            for (let x = 0; x < 10; x++) {
+                this.renderer.drawSprite(SPRITES.FLOOR, x * c, y * c, c, c);
+            }
+        }
 
-        // Game Start Button
-        const x = 80, y = 200, w = 160, h = 40;
-        this.renderer.strokeRect(x, y, w, h, COLORS.CYAN);
-        this.renderer.drawText("GAME START", 160, 228, COLORS.WHITE, 20, 'center');
+        // 2. Draw Borders (Walls)
+        for (let i = 0; i < 10; i++) {
+            this.renderer.drawSprite(SPRITES.WALL, i * c, 0, c, c); // Top
+            this.renderer.drawSprite(SPRITES.WALL, i * c, 9 * c, c, c); // Bottom
+            this.renderer.drawSprite(SPRITES.WALL, 0, i * c, c, c); // Left
+            this.renderer.drawSprite(SPRITES.WALL, 9 * c, i * c, c, c); // Right
+        }
 
-        this.renderer.drawText("© 2026", 160, 300, COLORS.GRAY, 12, 'center');
+        // 3. Draw Large Decorative Sprites
+        // Player on Left
+        this.renderer.drawSprite(SPRITES.PLAYER, 40, 120, 80, 80);
+        // Enemy on Right
+        this.renderer.drawSprite(SPRITES.ENEMY, 200, 120, 80, 80);
+
+        // 4. Dark Overlay for Text readability
+        this.renderer.ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+        this.renderer.ctx.fillRect(20, 40, 280, 240);
+
+        // 5. Title Text
+        // Shadow
+        this.renderer.drawText("ENGLISH", 163, 93, COLORS.PINK, 40, 'center');
+        this.renderer.drawText("DUNGEON", 163, 133, COLORS.CYAN, 40, 'center');
+        // Main
+        this.renderer.drawText("ENGLISH", 160, 90, COLORS.WHITE, 40, 'center');
+        this.renderer.drawText("DUNGEON", 160, 130, COLORS.WHITE, 40, 'center');
+
+        if (!this.audioInitialized) {
+            // "TAP TO START"
+            if (Math.floor(this.blinkTimer / 500) % 2 === 0) {
+                this.renderer.drawText("- TAP TO START -", 160, 220, COLORS.YELLOW, 20, 'center');
+            }
+        } else {
+            // "GAME START" Button
+            const x = 60, y = 240, w = 200, h = 50;
+
+            // Button Box
+            this.renderer.ctx.fillStyle = '#222';
+            this.renderer.ctx.fillRect(x, y, w, h);
+            this.renderer.strokeRect(x, y, w, h, COLORS.GREEN);
+
+            // Button Text
+            if (Math.floor(this.blinkTimer / 300) % 2 === 0) {
+                this.renderer.drawText("GAME START", 160, 275, COLORS.YELLOW, 28, 'center');
+            } else {
+                this.renderer.drawText("GAME START", 160, 275, COLORS.WHITE, 28, 'center');
+            }
+        }
+
+        this.renderer.drawText("© 2026 ENGLISH DUNGEON", 160, 310, COLORS.GRAY, 10, 'center');
     }
 
     drawGameOver() {
