@@ -227,12 +227,7 @@ canvas {
     border: 4px solid var(--neon-cyan);
 }
 
-@media (orientation: landscape) {
-    #landscape-warning {
-        display: flex;
-    }
-
-    #game-container {
-        display: none;
-    }
+/* Landscape Warning removed for PC support */
+#landscape-warning {
+    display: none !important;
 }
