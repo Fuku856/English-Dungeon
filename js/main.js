@@ -16,6 +16,14 @@ const COLORS = {
 const GAME_WIDTH = 320;
 const GAME_HEIGHT = 320;
 
+const TIME_LIMITS = {
+    'A': 15, // Slash
+    'B': 10, // Shield
+    'C': 15, // Magic
+    'D': 10, // Echo
+    'E': 10  // Talk
+};
+
 const randElem = (arr) => arr[Math.floor(Math.random() * arr.length)];
 const shuffle = (arr) => arr.sort(() => Math.random() - 0.5);
 
@@ -555,8 +563,9 @@ class Game {
 
         this.battle = {
             type: type,
-            timer: 0,
-            phase: 'INTRO',
+            timer: TIME_LIMITS[type] || 15,
+            maxTimer: TIME_LIMITS[type] || 15,
+            phase: 'PLAY',
             data: null,
             objects: []
         };
@@ -587,7 +596,7 @@ class Game {
             case 'B': // Shield
                 q = randElem(grammarList);
                 this.battle.data = q;
-                this.battle.timer = 600;
+                // Timer is set globally
                 this.setMessage(`[SHIELD] DEFEND: ${q.q}`);
                 break;
             case 'C': // Magic
@@ -649,6 +658,14 @@ class Game {
             return;
         }
 
+        // Global Timer Update
+        this.battle.timer -= dt / 1000;
+        if (this.battle.timer <= 0) {
+            this.battle.timer = 0;
+            this.battleLose("TIME UP!");
+            return;
+        }
+
         switch (this.battle.type) {
             case 'A': this.updateBattleA(); break;
             case 'B': this.updateBattleB(); break;
@@ -685,11 +702,7 @@ class Game {
     }
 
     updateBattleB() {
-        this.battle.timer--;
-        if (this.battle.timer <= 0) {
-            this.battleLose("Time Up!");
-            return;
-        }
+        // Timer handled globally
         if (this.input.justTouched) {
             this.battle.data.options.forEach((opt, i) => {
                 if (this.checkButton(40, 150 + i * 35, 240, 30)) {
@@ -825,6 +838,32 @@ class Game {
         this.renderer.drawSprite(SPRITES.ENEMY, 130, 40, 60, 60);
         this.renderer.drawText(`Type: ${this.battle.type}`, 160, 20, COLORS.GRAY, 12, 'center');
 
+        // Draw Timer Bar
+        if (this.battle.phase !== 'WIN' && this.battle.phase !== 'LOSE') {
+            const barW = 200;
+            const barH = 10;
+            const barX = (GAME_WIDTH - barW) / 2;
+            const barY = 25;
+
+            const pct = Math.max(0, this.battle.timer / this.battle.maxTimer);
+            const fillW = barW * pct;
+
+            // Background
+            this.renderer.ctx.fillStyle = '#444';
+            this.renderer.ctx.fillRect(barX, barY, barW, barH);
+
+            // Foreground Color
+            let barColor = COLORS.GREEN;
+            if (pct < 0.2) barColor = COLORS.RED;
+            else if (pct < 0.5) barColor = COLORS.YELLOW;
+
+            this.renderer.ctx.fillStyle = barColor;
+            this.renderer.ctx.fillRect(barX, barY, fillW, barH);
+
+            // Time Text
+            this.renderer.drawText(this.battle.timer.toFixed(1), barX + barW + 15, barY + 9, COLORS.WHITE, 12, 'left');
+        }
+
         if (this.battle.phase === 'WIN') {
             this.renderer.drawText("VICTORY!", 160, 160, COLORS.YELLOW, 30, 'center');
             return;
@@ -839,7 +878,6 @@ class Game {
                 });
                 break;
             case 'B': // Shield
-                this.renderer.drawText(`Timer: ${this.battle.timer}`, 280, 20, COLORS.RED, 12);
                 const qB = this.battle.data.q.replace("___", "___");
                 this.renderer.drawText(qB, 20, 130, COLORS.WHITE, 14);
                 this.battle.data.options.forEach((opt, i) => {
