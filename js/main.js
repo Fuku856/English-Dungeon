@@ -74,6 +74,35 @@ class AudioManager {
         setTimeout(() => this.playTone(1046.50, 'square', 0.4), 300); // C6
         setTimeout(() => this.startBgm(this.currentBgmType), 1000); // Resume
     }
+    playExplosion() {
+        const duration = 1.0;
+        const bufferSize = this.ctx.sampleRate * duration;
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+
+        for (let i = 0; i < bufferSize; i++) {
+            // White noise with exponential decay
+            data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 4);
+        }
+
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buffer;
+
+        // Lowpass filter to make it "boomy"
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = 1000;
+        filter.frequency.exponentialRampToValueAtTime(100, this.ctx.currentTime + duration);
+
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(0.5, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.ctx.destination);
+        noise.start();
+    }
 
     /* --- BGM SYSTEM --- */
     startBgm(type) {
@@ -278,6 +307,8 @@ class Game {
     start() {
         this.input.init();
         this.generateMap();
+        this.toggleControls(false); // Hide controls initially
+        this.state = 'TITLE'; // Ensure state is TITLE
         requestAnimationFrame((t) => this.loop(t));
     }
 
@@ -302,11 +333,25 @@ class Game {
 
     update(dt) {
         if (this.state === 'TITLE') {
+            if (this.input.justTouched) {
+                // Check "GAME START" button (approximate coords)
+                if (this.checkButton(80, 200, 160, 40)) {
+                    this.audio.init();
+                    this.audio.playSelect();
+                    this.state = 'EXPLORE';
+                    this.toggleControls(true);
+                    this.audio.startBgm('dungeon');
+                    this.setMessage("DUNGEON START! Floor 1");
+                }
+            }
+            // Keep keyboard "A" for debug/convenience if desired, or remove to strictly follow "no controller"
+            // Adding keyboard support for Start as backup
             if (this.input.isJustPressed('a')) {
                 this.audio.init();
                 this.audio.playSelect();
                 this.state = 'EXPLORE';
-                this.audio.startBgm('dungeon'); // Start Dungeon BGM
+                this.toggleControls(true);
+                this.audio.startBgm('dungeon');
                 this.setMessage("DUNGEON START! Floor 1");
             }
         }
@@ -320,7 +365,33 @@ class Game {
             this.updateBattle(dt);
         }
         else if (this.state === 'GAMEOVER') {
-            if (this.input.isJustPressed('a')) location.reload();
+            if (this.input.justTouched) {
+                // Retry Button (Top)
+                if (this.checkButton(80, 200, 160, 40)) { // Retry
+                    this.audio.playSelect();
+                    this.state = 'EXPLORE';
+                    this.player.hp = this.player.maxHp; // Restore HP
+                    // Optional: Reset position to start of floor? Or just stay?
+                    // Let's reset to start for fairness
+                    this.player.x = 1; this.player.y = 1;
+                    this.toggleControls(true);
+                    this.audio.startBgm('dungeon');
+                    this.setMessage("TRY AGAIN!");
+                }
+                // Main Menu Button (Bottom)
+                else if (this.checkButton(80, 260, 160, 40)) { // Menu
+                    this.audio.playCancel();
+                    this.state = 'TITLE';
+                    this.toggleControls(false);
+                    // Reset Game Data?
+                    this.player.level = 1;
+                    this.player.hp = 100; this.player.maxHp = 100;
+                    this.player.exp = 0; this.player.nextExp = 50;
+                    this.player.items = { potion: 3, dictionary: 0 };
+                    this.floor = 1;
+                    this.generateMap();
+                }
+            }
         }
     }
 
@@ -467,14 +538,18 @@ class Game {
                         this.setMessage(`LEVEL UP! LV${this.player.level}`);
                     }
                     this.state = 'EXPLORE';
+                    this.toggleControls(true); // Ensure controls are back if hidden (unlikely here)
                     if (this.battle.phase !== 'WIN') this.setMessage("Won the battle!"); // Fallback
                     this.audio.startBgm('dungeon'); // Resume Dungeon BGM
                 } else {
                     this.player.hp -= 20;
                     if (this.player.hp <= 0) {
+                        this.player.hp = 0; // Clamp
                         this.state = 'GAMEOVER';
-                        this.audio.stopBgm(); // Stop BGM on Game Over
-                        this.setMessage("GAME OVER... (A to Retry)");
+                        this.toggleControls(false); // Hide controls
+                        this.audio.stopBgm();
+                        this.audio.playExplosion();
+                        this.setMessage("GAME OVER...");
                     } else {
                         this.state = 'EXPLORE';
                         this.audio.startBgm('dungeon'); // Resume Dungeon BGM
@@ -620,8 +695,7 @@ class Game {
     draw() {
         this.renderer.clear();
         if (this.state === 'TITLE') {
-            this.renderer.drawText("ENGLISH DUNGEON", 160, 100, COLORS.GREEN, 24, 'center');
-            this.renderer.drawText("PRESS A BUTTON", 160, 200, (Date.now() % 1000 < 500) ? COLORS.CYAN : COLORS.BLACK, 16, 'center');
+            this.drawTitle();
         }
         else if (this.state === 'EXPLORE') {
             this.drawMap();
@@ -634,7 +708,10 @@ class Game {
         } else if (this.state === 'BATTLE') {
             this.drawBattle();
         } else if (this.state === 'GAMEOVER') {
-            this.renderer.drawText("GAME OVER", 160, 150, COLORS.RED, 32, 'center');
+            // Draw last state in background?
+            // this.drawBattle(); or this.drawMap();
+            // Let's just clear for now or draw static
+            this.drawGameOver();
         }
     }
 
@@ -728,6 +805,41 @@ class Game {
 
     drawPlayer() {
         this.renderer.drawRect(this.player.x * 32 + 8, this.player.y * 32 + 8, 16, 16, COLORS.CYAN);
+    }
+
+    drawTitle() {
+        this.renderer.drawText("ENGLISH DUNGEON", 160, 100, COLORS.GREEN, 32, 'center');
+
+        // Game Start Button
+        const x = 80, y = 200, w = 160, h = 40;
+        this.renderer.strokeRect(x, y, w, h, COLORS.CYAN);
+        this.renderer.drawText("GAME START", 160, 228, COLORS.WHITE, 20, 'center');
+
+        this.renderer.drawText("© 2026", 160, 300, COLORS.GRAY, 12, 'center');
+    }
+
+    drawGameOver() {
+        // Semi-transparent overlay
+        this.renderer.ctx.fillStyle = 'rgba(0,0,0,0.7)';
+        this.renderer.ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+        this.renderer.drawText("GAME OVER", 160, 120, COLORS.RED, 40, 'center');
+        this.renderer.drawText(`Final Level: ${this.player.level}`, 160, 150, COLORS.WHITE, 14, 'center');
+
+        // Retry Button
+        const rx = 80, ry = 200, rw = 160, rh = 40;
+        this.renderer.strokeRect(rx, ry, rw, rh, COLORS.GREEN);
+        this.renderer.drawText("RETRY", 160, 228, COLORS.WHITE, 20, 'center');
+
+        // Menu Button
+        const mx = 80, my = 260, mw = 160, mh = 40;
+        this.renderer.strokeRect(mx, my, mw, mh, COLORS.GRAY);
+        this.renderer.drawText("MAIN MENU", 160, 288, COLORS.WHITE, 20, 'center');
+    }
+
+    toggleControls(visible) {
+        const el = document.getElementById('controls');
+        if (el) el.style.display = visible ? 'flex' : 'none';
     }
 }
 
