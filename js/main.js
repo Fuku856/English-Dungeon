@@ -24,6 +24,7 @@ class AudioManager {
     constructor() {
         this.ctx = null;
         this.initialized = false;
+        this.pausedBgmType = null;
     }
 
     init() {
@@ -31,10 +32,38 @@ class AudioManager {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         this.ctx = new AudioContext();
         this.initialized = true;
+
+        // Handle page visibility change (stop BGM/SE when backgrounded)
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                // Pause BGM if playing
+                if (this.bgmInterval) {
+                    this.pausedBgmType = this.currentBgmType;
+                    this.stopBgm();
+                }
+                // Suspend audio context
+                if (this.ctx && this.ctx.state === 'running') {
+                    this.ctx.suspend();
+                }
+            } else {
+                // Resume audio context
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+                // Resume BGM if it was paused
+                if (this.pausedBgmType) {
+                    this.startBgm(this.pausedBgmType);
+                    this.pausedBgmType = null;
+                }
+            }
+        });
     }
 
     playTone(freq, type, duration, vol = 0.3) {
-        if (!this.initialized) return;
+        if (!this.initialized || !this.ctx) return;
+        // Don't play if context is suspended or hidden (double check)
+        if (this.ctx.state === 'suspended') return;
+
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.type = type;
@@ -75,6 +104,7 @@ class AudioManager {
         setTimeout(() => this.startBgm(this.currentBgmType), 1000); // Resume
     }
     playExplosion() {
+        if (!this.ctx) return;
         const duration = 1.0;
         const bufferSize = this.ctx.sampleRate * duration;
         const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
@@ -106,6 +136,12 @@ class AudioManager {
 
     /* --- BGM SYSTEM --- */
     startBgm(type) {
+        if (document.hidden) {
+            this.pausedBgmType = type;
+            this.currentBgmType = type;
+            return;
+        }
+
         if (this.currentBgmType === type && this.bgmInterval) return;
         this.stopBgm();
         this.currentBgmType = type;
@@ -138,6 +174,7 @@ class AudioManager {
 
         let noteIndex = 0;
         this.bgmInterval = setInterval(() => {
+            if (this.ctx && this.ctx.state === 'suspended') return; // Don't queue if suspended
             const freq = pattern[noteIndex];
             if (freq > 0) {
                 this.playTone(freq, wave, 0.1, vol);
