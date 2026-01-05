@@ -1,0 +1,198 @@
+:root {
+    --bg-color: #050505;
+    --neon-green: #39ff14;
+    --neon-cyan: #00ffff;
+    --neon-pink: #ff00ff;
+    --text-color: #ffffff;
+    --ui-border: 2px solid #333;
+    --font-main: 'DotGothic16', sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    touch-action: none; /* Prevent browser defaults like pull-to-refresh */
+    user-select: none; /* Prevent text selection */
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: var(--font-main);
+    overflow: hidden; /* Prevent scrolling */
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#game-container {
+    width: 100%;
+    height: 100%;
+    max-width: 600px; /* Tablet/Desktop limit */
+    display: flex;
+    flex-direction: column;
+    background-color: #000;
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);
+    position: relative;
+}
+
+/* --- Upper Part: Game Canvas (60%) --- */
+#canvas-wrapper {
+    flex: 6; /* 60% */
+    position: relative;
+    width: 100%;
+    background-color: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-bottom: var(--ui-border);
+    overflow: hidden;
+}
+
+canvas {
+    image-rendering: pixelated; /* Sharp pixels */
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* Scanline Effect */
+#scanline {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0),
+        rgba(255, 255, 255, 0) 50%,
+        rgba(0, 0, 0, 0.2) 50%,
+        rgba(0, 0, 0, 0.2)
+    );
+    background-size: 100% 4px;
+    pointer-events: none;
+    z-index: 10;
+    opacity: 0.6;
+}
+
+/* --- Lower Part: UI Area (40%) --- */
+#ui-area {
+    flex: 4; /* 40% */
+    background-color: #111;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    gap: 10px;
+}
+
+#message-window {
+    flex: 1;
+    border: 2px solid var(--neon-cyan);
+    border-radius: 4px;
+    padding: 8px;
+    background-color: #000;
+    overflow-y: hidden;
+    color: var(--text-color);
+    font-size: 16px;
+    line-height: 1.4;
+    box-shadow: 0 0 5px var(--neon-cyan);
+}
+
+#controls {
+    flex: 2;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 10px;
+}
+
+/* D-Pad */
+#dpad {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.dpad-row {
+    display: flex;
+    gap: 5px;
+}
+
+.dpad-btn {
+    width: 50px;
+    height: 50px;
+    background-color: #444;
+    border: 2px solid #666;
+    border-radius: 4px;
+    color: #aaa;
+    font-size: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    active: background-color: #666;
+    box-shadow: 0 4px 0 #222;
+    cursor: pointer;
+}
+
+.dpad-btn:active {
+    transform: translateY(4px);
+    box-shadow: 0 0 0;
+    background-color: var(--neon-green);
+    color: #000;
+}
+
+.dpad-center {
+    width: 50px;
+    height: 50px;
+}
+
+/* Action Buttons */
+#action-buttons {
+    display: flex;
+    gap: 20px;
+    align-items: flex-end;
+}
+
+.action-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 2px solid #666;
+    font-size: 18px;
+    font-family: var(--font-main);
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4px 0 #222;
+    cursor: pointer;
+}
+
+#btn-a {
+    background-color: #b22222; /* Reddish */
+    color: white;
+    margin-bottom: 20px; /* A button is usually higher/right */
+}
+
+#btn-a:active {
+    background-color: var(--neon-pink);
+    transform: translateY(4px);
+    box-shadow: 0 0 0;
+}
+
+#btn-b {
+    background-color: #d2691e; /* Orange/Brown */
+    color: white;
+}
+
+#btn-b:active {
+    background-color: var(--neon-green);
+    transform: translateY(4px);
+    box-shadow: 0 0 0;
+}

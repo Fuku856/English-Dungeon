@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>English Dungeon</title>
+    <!-- Google Fonts: DotGothic16 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <!-- 画面上部 60%: メインゲーム画面 -->
+        <div id="canvas-wrapper">
+            <canvas id="gameCanvas"></canvas>
+            <div id="scanline"></div>
+        </div>
+
+        <!-- 画面下部 40%: UIエリア -->
+        <div id="ui-area">
+            <div id="message-window">
+                <p id="message-text">WELCOME TO ENGLISH DUNGEON...</p>
+            </div>
+            
+            <div id="controls">
+                <div id="dpad">
+                    <div class="dpad-row">
+                        <button id="btn-up" class="dpad-btn">▲</button>
+                    </div>
+                    <div class="dpad-row">
+                        <button id="btn-left" class="dpad-btn">◀</button>
+                        <div class="dpad-center"></div>
+                        <button id="btn-right" class="dpad-btn">▶</button>
+                    </div>
+                    <div class="dpad-row">
+                        <button id="btn-down" class="dpad-btn">▼</button>
+                    </div>
+                </div>
+
+                <div id="action-buttons">
+                    <button id="btn-b" class="action-btn">B</button>
+                    <button id="btn-a" class="action-btn">A</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/data.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
