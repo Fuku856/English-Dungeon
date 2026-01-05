@@ -279,6 +279,25 @@ class Renderer {
         this.ctx.arc(x, y, r, 0, Math.PI * 2);
         this.ctx.fill();
     }
+
+    drawSprite(sprite, x, y, width, height, palette = PALETTES.DEFAULT) {
+        if (!sprite) return;
+        const rows = sprite.length;
+        const cols = sprite[0].length;
+        const pw = width / cols;
+        const ph = height / rows;
+
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                const char = sprite[r][c];
+                const color = palette[char];
+                if (color) {
+                    this.ctx.fillStyle = color;
+                    this.ctx.fillRect(x + c * pw, y + r * ph, pw, ph);
+                }
+            }
+        }
+    }
 }
 
 /* --- GAME STATE --- */
@@ -733,7 +752,7 @@ class Game {
     }
 
     drawBattle() {
-        this.renderer.drawRect(130, 40, 60, 60, COLORS.RED);
+        this.renderer.drawSprite(SPRITES.ENEMY, 130, 40, 60, 60);
         this.renderer.drawText(`Type: ${this.battle.type}`, 160, 20, COLORS.GRAY, 12, 'center');
 
         if (this.battle.phase === 'WIN') {
@@ -745,7 +764,7 @@ class Game {
             case 'A': // Slash
                 this.renderer.drawText(this.battle.data.en, 160, 120, COLORS.WHITE, 20, 'center');
                 this.battle.objects.forEach(obj => {
-                    this.renderer.drawCircle(obj.x, obj.y, 18, COLORS.CYAN);
+                    this.renderer.drawSprite(SPRITES.ORB, obj.x - 18, obj.y - 18, 36, 36);
                     this.renderer.drawText(obj.text, obj.x, obj.y + 4, COLORS.BLACK, 10, 'center');
                 });
                 break;
@@ -793,18 +812,18 @@ class Game {
         for (let y = 0; y < 10; y++) {
             for (let x = 0; x < 10; x++) {
                 const cell = this.map[y][x];
-                let col = '#000';
-                if (cell === 0) col = '#222';
-                if (cell === 1) col = '#111';
-                if (cell === 2) col = COLORS.PINK;
-                this.renderer.drawRect(x * c, y * c, c, c, col);
-                this.renderer.strokeRect(x * c, y * c, c, c, '#333');
+                let sprite = SPRITES.FLOOR;
+
+                if (cell === 0) sprite = SPRITES.WALL;
+                else if (cell === 2) sprite = SPRITES.STAIRS;
+
+                this.renderer.drawSprite(sprite, x * c, y * c, c, c);
             }
         }
     }
 
     drawPlayer() {
-        this.renderer.drawRect(this.player.x * 32 + 8, this.player.y * 32 + 8, 16, 16, COLORS.CYAN);
+        this.renderer.drawSprite(SPRITES.PLAYER, this.player.x * 32, this.player.y * 32, 32, 32);
     }
 
     drawTitle() {
