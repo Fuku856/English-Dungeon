@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>English Dungeon</title>
     <!-- Google Fonts: DotGothic16 -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -10,6 +12,7 @@
     <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div id="game-container">
         <!-- 画面上部 60%: メインゲーム画面 -->
@@ -23,7 +26,7 @@
             <div id="message-window">
                 <p id="message-text">WELCOME TO ENGLISH DUNGEON...</p>
             </div>
-            
+
             <div id="controls">
                 <div id="dpad">
                     <div class="dpad-row">
@@ -47,8 +50,14 @@
         </div>
     </div>
 
+    <!-- Landscape Warning Overlay -->
+    <div id="landscape-warning">
+        <p>SMARTPHONE ONLY<br>PORTRAIT MODE</p>
+    </div>
+
     <!-- Scripts -->
     <script src="js/data.js"></script>
     <script src="js/main.js"></script>
 </body>
+
 </html>

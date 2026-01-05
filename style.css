@@ -10,8 +10,10 @@
 
 * {
     box-sizing: border-box;
-    touch-action: none; /* Prevent browser defaults like pull-to-refresh */
-    user-select: none; /* Prevent text selection */
+    touch-action: none;
+    /* Prevent browser defaults like pull-to-refresh */
+    user-select: none;
+    /* Prevent text selection */
     -webkit-tap-highlight-color: transparent;
 }
 
@@ -21,8 +23,11 @@ body {
     background-color: var(--bg-color);
     color: var(--text-color);
     font-family: var(--font-main);
-    overflow: hidden; /* Prevent scrolling */
+    overflow: hidden;
+    /* Prevent scrolling */
     height: 100vh;
+    height: 100dvh;
+    /* Mobile viewport fix */
     width: 100vw;
     display: flex;
     justify-content: center;
@@ -32,7 +37,8 @@ body {
 #game-container {
     width: 100%;
     height: 100%;
-    max-width: 600px; /* Tablet/Desktop limit */
+    max-width: 600px;
+    /* Tablet/Desktop limit */
     display: flex;
     flex-direction: column;
     background-color: #000;
@@ -42,7 +48,8 @@ body {
 
 /* --- Upper Part: Game Canvas (60%) --- */
 #canvas-wrapper {
-    flex: 6; /* 60% */
+    flex: 6;
+    /* 60% */
     position: relative;
     width: 100%;
     background-color: #000;
@@ -54,7 +61,8 @@ body {
 }
 
 canvas {
-    image-rendering: pixelated; /* Sharp pixels */
+    image-rendering: pixelated;
+    /* Sharp pixels */
     width: 100%;
     height: 100%;
     object-fit: contain;
@@ -67,13 +75,11 @@ canvas {
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(
-        to bottom,
-        rgba(255, 255, 255, 0),
-        rgba(255, 255, 255, 0) 50%,
-        rgba(0, 0, 0, 0.2) 50%,
-        rgba(0, 0, 0, 0.2)
-    );
+    background: linear-gradient(to bottom,
+            rgba(255, 255, 255, 0),
+            rgba(255, 255, 255, 0) 50%,
+            rgba(0, 0, 0, 0.2) 50%,
+            rgba(0, 0, 0, 0.2));
     background-size: 100% 4px;
     pointer-events: none;
     z-index: 10;
@@ -82,11 +88,14 @@ canvas {
 
 /* --- Lower Part: UI Area (40%) --- */
 #ui-area {
-    flex: 4; /* 40% */
+    flex: 4;
+    /* 40% */
     background-color: #111;
     display: flex;
     flex-direction: column;
     padding: 10px;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    /* Safe Area */
     gap: 10px;
 }
 
@@ -125,8 +134,8 @@ canvas {
 }
 
 .dpad-btn {
-    width: 50px;
-    height: 50px;
+    width: 60px;
+    height: 60px;
     background-color: #444;
     border: 2px solid #666;
     border-radius: 4px;
@@ -135,7 +144,7 @@ canvas {
     display: flex;
     justify-content: center;
     align-items: center;
-    active: background-color: #666;
+    /* active: background-color: #666; Removed invalid property */
     box-shadow: 0 4px 0 #222;
     cursor: pointer;
 }
@@ -148,8 +157,8 @@ canvas {
 }
 
 .dpad-center {
-    width: 50px;
-    height: 50px;
+    width: 60px;
+    height: 60px;
 }
 
 /* Action Buttons */
@@ -160,8 +169,8 @@ canvas {
 }
 
 .action-btn {
-    width: 60px;
-    height: 60px;
+    width: 70px;
+    height: 70px;
     border-radius: 50%;
     border: 2px solid #666;
     font-size: 18px;
@@ -175,9 +184,11 @@ canvas {
 }
 
 #btn-a {
-    background-color: #b22222; /* Reddish */
+    background-color: #b22222;
+    /* Reddish */
     color: white;
-    margin-bottom: 20px; /* A button is usually higher/right */
+    margin-bottom: 20px;
+    /* A button is usually higher/right */
 }
 
 #btn-a:active {
@@ -187,7 +198,8 @@ canvas {
 }
 
 #btn-b {
-    background-color: #d2691e; /* Orange/Brown */
+    background-color: #d2691e;
+    /* Orange/Brown */
     color: white;
 }
 
@@ -195,4 +207,32 @@ canvas {
     background-color: var(--neon-green);
     transform: translateY(4px);
     box-shadow: 0 0 0;
+}
+
+/* Landscape Warning */
+#landscape-warning {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #000;
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: var(--neon-pink);
+    font-size: 24px;
+    border: 4px solid var(--neon-cyan);
+}
+
+@media (orientation: landscape) {
+    #landscape-warning {
+        display: flex;
+    }
+
+    #game-container {
+        display: none;
+    }
 }
