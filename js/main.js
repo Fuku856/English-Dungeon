@@ -113,6 +113,8 @@ class AudioManager {
         // Simple patterns (Frequency, Duration)
         let pattern = [];
         let speed = 200; // ms per note
+        let vol = 0.2;
+        let wave = 'triangle';
 
         if (type === 'dungeon') {
             // Spooky, slow bass
@@ -121,6 +123,8 @@ class AudioManager {
                 110, 0, 110, 0, 123, 0, 110, 0,
                 98, 0, 98, 0, 110, 0, 0, 0
             ];
+            vol = 0.5; // Significantly increased
+            wave = 'square'; // More audible than triangle for bass
         } else if (type === 'battle') {
             // Urgent, faster arpeggio
             speed = 150;
@@ -128,13 +132,15 @@ class AudioManager {
                 220, 220, 261, 220, 329, 220, 261, 293,
                 220, 220, 261, 220, 392, 349, 329, 293
             ];
+            vol = 0.4;
+            wave = 'triangle';
         }
 
         let noteIndex = 0;
         this.bgmInterval = setInterval(() => {
             const freq = pattern[noteIndex];
             if (freq > 0) {
-                this.playTone(freq, 'triangle', 0.1, 0.2); // Increased volume
+                this.playTone(freq, wave, 0.1, vol);
             }
             noteIndex = (noteIndex + 1) % pattern.length;
         }, speed);
