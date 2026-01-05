@@ -33,7 +33,7 @@ class AudioManager {
         this.initialized = true;
     }
 
-    playTone(freq, type, duration, vol = 0.1) {
+    playTone(freq, type, duration, vol = 0.3) {
         if (!this.initialized) return;
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
@@ -47,31 +47,31 @@ class AudioManager {
         osc.stop(this.ctx.currentTime + duration);
     }
     // Sound Effects
-    playCursor() { this.playTone(440, 'triangle', 0.1); }
-    playSelect() { this.playTone(880, 'square', 0.1); }
-    playCancel() { this.playTone(220, 'sawtooth', 0.2); }
-    playStep() { this.playTone(100, 'square', 0.05, 0.05); }
+    playCursor() { this.playTone(440, 'triangle', 0.1, 0.3); }
+    playSelect() { this.playTone(880, 'square', 0.1, 0.3); }
+    playCancel() { this.playTone(220, 'sawtooth', 0.2, 0.4); }
+    playStep() { this.playTone(100, 'square', 0.05, 0.2); }
     playDamage() {
-        this.playTone(150, 'sawtooth', 0.1);
-        setTimeout(() => this.playTone(100, 'sawtooth', 0.2), 50);
+        this.playTone(150, 'sawtooth', 0.1, 0.4);
+        setTimeout(() => this.playTone(100, 'sawtooth', 0.2, 0.5), 50);
     }
-    playWrong() { this.playTone(100, 'sawtooth', 0.5); }
-    playAttack() { this.playTone(300, 'square', 0.1); }
+    playWrong() { this.playTone(100, 'sawtooth', 0.5, 0.6); }
+    playAttack() { this.playTone(300, 'square', 0.1, 0.4); }
     playHeal() {
-        this.playTone(400, 'sine', 0.1);
-        setTimeout(() => this.playTone(600, 'sine', 0.2), 100);
-        setTimeout(() => this.playTone(800, 'sine', 0.4), 200);
+        this.playTone(400, 'sine', 0.1, 0.4);
+        setTimeout(() => this.playTone(600, 'sine', 0.2, 0.5), 100);
+        setTimeout(() => this.playTone(800, 'sine', 0.4, 0.6), 200);
     }
     playMagic() {
-        this.playTone(600, 'sine', 0.2);
-        setTimeout(() => this.playTone(800, 'sine', 0.2), 100);
+        this.playTone(600, 'sine', 0.2, 0.4);
+        setTimeout(() => this.playTone(800, 'sine', 0.2, 0.5), 100);
     }
     playWin() {
         this.stopBgm(); // Win fanfare pauses BGM
-        this.playTone(523.25, 'square', 0.1); // C5
-        setTimeout(() => this.playTone(659.25, 'square', 0.1), 100); // E5
-        setTimeout(() => this.playTone(783.99, 'square', 0.2), 200); // G5
-        setTimeout(() => this.playTone(1046.50, 'square', 0.4), 300); // C6
+        this.playTone(523.25, 'square', 0.1, 0.4); // C5
+        setTimeout(() => this.playTone(659.25, 'square', 0.1, 0.4), 100); // E5
+        setTimeout(() => this.playTone(783.99, 'square', 0.2, 0.5), 200); // G5
+        setTimeout(() => this.playTone(1046.50, 'square', 0.4, 0.6), 300); // C6
         setTimeout(() => this.startBgm(this.currentBgmType), 1000); // Resume
     }
     playExplosion() {
@@ -95,7 +95,7 @@ class AudioManager {
         filter.frequency.exponentialRampToValueAtTime(100, this.ctx.currentTime + duration);
 
         const gain = this.ctx.createGain();
-        gain.gain.setValueAtTime(0.5, this.ctx.currentTime);
+        gain.gain.setValueAtTime(0.8, this.ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
 
         noise.connect(filter);
@@ -134,7 +134,7 @@ class AudioManager {
         this.bgmInterval = setInterval(() => {
             const freq = pattern[noteIndex];
             if (freq > 0) {
-                this.playTone(freq, 'triangle', 0.1, 0.05); // Low volume background
+                this.playTone(freq, 'triangle', 0.1, 0.2); // Increased volume
             }
             noteIndex = (noteIndex + 1) % pattern.length;
         }, speed);
