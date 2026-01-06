@@ -835,8 +835,8 @@ class Game {
     }
 
     drawBattle() {
-        this.renderer.drawSprite(SPRITES.ENEMY, 130, 50, 60, 60);
-        this.renderer.drawText(`Type: ${this.battle.type}`, 160, 115, COLORS.GRAY, 10, 'center');
+        this.renderer.drawSprite(SPRITES.ENEMY, 130, 45, 60, 60);
+        this.renderer.drawText(`Type: ${this.battle.type}`, 160, 112, COLORS.GRAY, 10, 'center');
 
         // Draw Timer Bar (Enhanced)
         if (this.battle.phase !== 'WIN' && this.battle.phase !== 'LOSE') {
@@ -875,7 +875,7 @@ class Game {
 
         switch (this.battle.type) {
             case 'A': // Slash
-                this.renderer.drawText(this.battle.data.en, 160, 120, COLORS.WHITE, 20, 'center');
+                this.renderer.drawText(this.battle.data.en, 160, 130, COLORS.WHITE, 20, 'center');
                 this.battle.objects.forEach(obj => {
                     this.renderer.drawSprite(SPRITES.ORB, obj.x - 18, obj.y - 18, 36, 36);
                     this.renderer.drawText(obj.text, obj.x, obj.y + 4, COLORS.BLACK, 10, 'center');
@@ -883,18 +883,18 @@ class Game {
                 break;
             case 'B': // Shield
                 const qB = this.battle.data.q.replace("___", "___");
-                this.renderer.drawText(qB, 20, 130, COLORS.WHITE, 14);
+                this.renderer.drawText(qB, 20, 135, COLORS.WHITE, 14);
                 this.battle.data.options.forEach((opt, i) => {
-                    this.renderer.strokeRect(40, 150 + i * 35, 240, 30, COLORS.GREEN);
-                    this.renderer.drawText(opt, 160, 170 + i * 35, COLORS.WHITE, 16, 'center');
+                    this.renderer.strokeRect(40, 155 + i * 35, 240, 30, COLORS.GREEN);
+                    this.renderer.drawText(opt, 160, 175 + i * 35, COLORS.WHITE, 16, 'center');
                 });
                 break;
             case 'C': // Magic
-                this.renderer.drawText(this.battle.data.jp, 160, 120, COLORS.WHITE, 16, 'center');
-                this.renderer.drawText(this.battle.data.current.join(" "), 160, 150, COLORS.CYAN, 14, 'center');
+                this.renderer.drawText(this.battle.data.jp, 160, 130, COLORS.WHITE, 16, 'center');
+                this.renderer.drawText(this.battle.data.current.join(" "), 160, 160, COLORS.CYAN, 14, 'center');
                 this.battle.data.pool.forEach((word, i) => {
                     const x = 20 + (i % 3) * 100;
-                    const y = 180 + Math.floor(i / 3) * 40;
+                    const y = 190 + Math.floor(i / 3) * 40;
                     this.renderer.strokeRect(x, y, 90, 30, COLORS.PINK);
                     this.renderer.drawText(word, x + 45, y + 20, COLORS.WHITE, 12, 'center');
                 });
@@ -904,16 +904,16 @@ class Game {
                     this.renderer.drawText("Press 'A' to Listen", 160, 150, COLORS.WHITE, 16, 'center');
                 } else {
                     this.battle.data.options.forEach((opt, i) => {
-                        this.renderer.strokeRect(40, 150 + i * 35, 240, 30, COLORS.CYAN);
-                        this.renderer.drawText(opt, 160, 170 + i * 35, COLORS.WHITE, 16, 'center');
+                        this.renderer.strokeRect(40, 155 + i * 35, 240, 30, COLORS.CYAN);
+                        this.renderer.drawText(opt, 160, 175 + i * 35, COLORS.WHITE, 16, 'center');
                     });
                 }
                 break;
             case 'E': // Talk
-                this.renderer.drawText(this.battle.data.q, 20, 120, COLORS.YELLOW, 14);
+                this.renderer.drawText(this.battle.data.q, 20, 130, COLORS.YELLOW, 14);
                 this.battle.data.options.forEach((opt, i) => {
-                    this.renderer.strokeRect(20, 150 + i * 45, 280, 40, COLORS.GREEN);
-                    this.renderer.drawText(opt, 30, 175 + i * 45, COLORS.WHITE, 12, 'left');
+                    this.renderer.strokeRect(20, 155 + i * 45, 280, 40, COLORS.GREEN);
+                    this.renderer.drawText(opt, 30, 180 + i * 45, COLORS.WHITE, 12, 'left');
                 });
                 break;
         }
