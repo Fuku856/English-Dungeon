@@ -434,7 +434,7 @@ class Game {
                 // Main Title Menu
                 if (this.input.justTouched) {
                     // "GAME START" button (Top)
-                    if (this.checkButton(60, 230, 200, 40)) {
+                    if (this.checkButton(60, 210, 200, 40)) { // Moved up from 230
                         this.audio.playSelect();
                         this.state = 'EXPLORE'; // Quick Start
                         this.toggleControls(true);
@@ -442,7 +442,7 @@ class Game {
                         this.setMessage("DUNGEON START! Floor 1");
                     }
                     // "CHARACTERS" button (Bottom)
-                    else if (this.checkButton(60, 280, 200, 40)) {
+                    else if (this.checkButton(60, 260, 200, 40)) { // Moved up from 280
                         this.audio.playSelect();
                         this.state = 'CHAR_SELECT';
                         this.toggleControls(true);
@@ -563,6 +563,24 @@ class Game {
                 this.audio.playWrong();
                 if (this.player.items.potion <= 0) this.setMessage("No Potions left!");
                 else this.setMessage("HP is full!");
+            }
+        }
+
+        if (this.input.justTouched) {
+            // Main Menu Button
+            if (this.checkButton(60, 245, 200, 30)) {
+                this.audio.playCancel();
+                this.state = 'TITLE';
+                this.audio.startBgm('title');
+                this.toggleControls(false);
+
+                // Reset Game Data
+                this.player.level = 1;
+                this.player.hp = 100; this.player.maxHp = 100;
+                this.player.exp = 0; this.player.nextExp = 50;
+                this.player.items = { potion: 3, dictionary: 0 };
+                this.floor = 1;
+                this.generateMap();
             }
         }
     }
@@ -901,9 +919,12 @@ class Game {
         this.renderer.drawText(`ATK: ${this.player.atk}`, 60, 160, COLORS.WHITE);
 
         this.renderer.drawText("ITEMS", 160, 190, COLORS.CYAN, 16, 'center');
-        this.renderer.drawText(`Potion: ${this.player.items.potion}`, 60, 220, COLORS.WHITE);
-        this.renderer.drawText("(Press A to Use)", 160, 250, COLORS.GRAY, 12, 'center');
+        this.renderer.drawText(`Potion: ${this.player.items.potion}`, 60, 215, COLORS.WHITE);
+        this.renderer.drawText("(Press A to Use)", 160, 235, COLORS.GRAY, 12, 'center');
 
+        // Main Menu Button
+        this.renderer.strokeRect(60, 245, 200, 30, COLORS.RED);
+        this.renderer.drawText("MAIN MENU", 160, 265, COLORS.WHITE, 16, 'center');
     }
 
     drawCharSelect() {
@@ -1094,8 +1115,8 @@ class Game {
         } else {
 
             // "GAME START" Button
-            const bx = 60, by = 230, bw = 200, bh = 40;
-            const cx = 60, cy = 280, cw = 200, ch = 40;
+            const bx = 60, by = 210, bw = 200, bh = 40; // Moved up 20px
+            const cx = 60, cy = 260, cw = 200, ch = 40; // Moved up 20px
 
             // Start Button
             this.renderer.ctx.fillStyle = '#222';
