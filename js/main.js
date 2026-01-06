@@ -835,33 +835,37 @@ class Game {
     }
 
     drawBattle() {
-        this.renderer.drawSprite(SPRITES.ENEMY, 130, 40, 60, 60);
-        this.renderer.drawText(`Type: ${this.battle.type}`, 160, 20, COLORS.GRAY, 12, 'center');
+        this.renderer.drawSprite(SPRITES.ENEMY, 130, 50, 60, 60);
+        this.renderer.drawText(`Type: ${this.battle.type}`, 160, 115, COLORS.GRAY, 10, 'center');
 
-        // Draw Timer Bar
+        // Draw Timer Bar (Enhanced)
         if (this.battle.phase !== 'WIN' && this.battle.phase !== 'LOSE') {
-            const barW = 200;
-            const barH = 10;
+            const barW = 280;
+            const barH = 24;
             const barX = (GAME_WIDTH - barW) / 2;
-            const barY = 25;
+            const barY = 15;
 
             const pct = Math.max(0, this.battle.timer / this.battle.maxTimer);
             const fillW = barW * pct;
 
             // Background
-            this.renderer.ctx.fillStyle = '#444';
+            this.renderer.ctx.fillStyle = '#222';
             this.renderer.ctx.fillRect(barX, barY, barW, barH);
+            this.renderer.strokeRect(barX, barY, barW, barH, COLORS.WHITE);
 
             // Foreground Color
             let barColor = COLORS.GREEN;
-            if (pct < 0.2) barColor = COLORS.RED;
-            else if (pct < 0.5) barColor = COLORS.YELLOW;
+            if (pct < 0.3) barColor = COLORS.RED;
+            else if (pct < 0.6) barColor = COLORS.YELLOW;
 
             this.renderer.ctx.fillStyle = barColor;
             this.renderer.ctx.fillRect(barX, barY, fillW, barH);
 
             // Time Text
-            this.renderer.drawText(this.battle.timer.toFixed(1), barX + barW + 15, barY + 9, COLORS.WHITE, 12, 'left');
+            this.renderer.ctx.shadowColor = "black";
+            this.renderer.ctx.shadowBlur = 4;
+            this.renderer.drawText(this.battle.timer.toFixed(1), 160, barY + 19, COLORS.WHITE, 20, 'center');
+            this.renderer.ctx.shadowBlur = 0;
         }
 
         if (this.battle.phase === 'WIN') {
