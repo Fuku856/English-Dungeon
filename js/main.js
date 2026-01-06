@@ -379,8 +379,11 @@ class Game {
             atk: 10,
             level: 1,
             exp: 0, nextExp: 50,
-            items: { potion: 3, dictionary: 0 }
+            items: { potion: 3, dictionary: 0 },
+            char: 'BOY' // Default
         };
+        this.availableChars = ['BOY', 'GIRL', 'CAT', 'RABBIT'];
+        this.charSelectIndex = 0;
         this.map = [];
         this.floor = 1;
         this.battle = null;
@@ -430,13 +433,20 @@ class Game {
             } else {
                 // Main Title Menu
                 if (this.input.justTouched) {
-                    // Check "GAME START" button (approximate coords)
-                    if (this.checkButton(60, 240, 200, 50)) {
+                    // "GAME START" button (Top)
+                    if (this.checkButton(60, 230, 200, 40)) {
                         this.audio.playSelect();
-                        this.state = 'EXPLORE';
+                        this.state = 'EXPLORE'; // Quick Start
                         this.toggleControls(true);
                         this.audio.startBgm('dungeon');
                         this.setMessage("DUNGEON START! Floor 1");
+                    }
+                    // "CHARACTERS" button (Bottom)
+                    else if (this.checkButton(60, 280, 200, 40)) {
+                        this.audio.playSelect();
+                        this.state = 'CHAR_SELECT';
+                        this.toggleControls(true);
+                        this.setMessage("SELECT YOUR CHARACTER");
                     }
                 }
                 if (this.input.isJustPressed('a')) {
@@ -446,7 +456,17 @@ class Game {
                     this.audio.startBgm('dungeon');
                     this.setMessage("DUNGEON START! Floor 1");
                 }
+                // Optional: Press 'B' for Character Select?
+                if (this.input.isJustPressed('b')) {
+                    this.audio.playSelect();
+                    this.state = 'CHAR_SELECT';
+                    this.toggleControls(true);
+                    this.setMessage("SELECT YOUR CHARACTER");
+                }
             }
+        }
+        else if (this.state === 'CHAR_SELECT') {
+            this.updateCharSelect();
         }
         else if (this.state === 'EXPLORE') {
             this.updateExplore();
@@ -543,6 +563,54 @@ class Game {
                 this.audio.playWrong();
                 if (this.player.items.potion <= 0) this.setMessage("No Potions left!");
                 else this.setMessage("HP is full!");
+            }
+        }
+    }
+
+    updateCharSelect() {
+        if (this.input.isJustPressed('left')) {
+            this.charSelectIndex = (this.charSelectIndex - 1 + this.availableChars.length) % this.availableChars.length;
+            this.audio.playCursor();
+        } else if (this.input.isJustPressed('right')) {
+            this.charSelectIndex = (this.charSelectIndex + 1) % this.availableChars.length;
+            this.audio.playCursor();
+        }
+
+        if (this.input.isJustPressed('a')) {
+            this.audio.playSelect();
+            this.player.char = this.availableChars[this.charSelectIndex];
+            this.state = 'EXPLORE';
+            this.audio.startBgm('dungeon');
+            this.setMessage("DUNGEON START! Floor 1");
+        }
+        // Handle touch for character selection
+        if (this.input.justTouched) {
+            // Check if touched any character slot
+            const margin = 20;
+            const spacing = 70;
+            const startX = (GAME_WIDTH - (this.availableChars.length * spacing)) / 2 + 20;
+
+            this.availableChars.forEach((char, i) => {
+                const x = startX + i * spacing;
+                const y = 140;
+                if (this.checkButton(x, y, 50, 50)) {
+                    this.charSelectIndex = i;
+                    this.audio.playSelect();
+                    // Confirm selection? Or just select? Let's just select first, or confirm if already selected.
+                    // Making it simple: Touch to select, Press A or Touch Button below to Start?
+                    // Let's make touching the character select it, and a separate "OK" button or touching it again confirms.
+                    // For simplicity: Update index.
+                    this.audio.playCursor();
+                }
+            });
+
+            // OK Button
+            if (this.checkButton(110, 240, 100, 40)) {
+                this.audio.playSelect();
+                this.player.char = this.availableChars[this.charSelectIndex];
+                this.state = 'EXPLORE';
+                this.audio.startBgm('dungeon');
+                this.setMessage("DUNGEON START! Floor 1");
             }
         }
     }
@@ -804,6 +872,9 @@ class Game {
             this.drawPlayer();
             this.renderer.drawText(`LV:${this.player.level} HP:${this.player.hp}`, 10, 20, COLORS.WHITE, 12);
             this.renderer.drawText(`F:${this.floor}`, 280, 20, COLORS.WHITE, 12);
+
+        } else if (this.state === 'CHAR_SELECT') {
+            this.drawCharSelect();
         } else if (this.state === 'MENU') {
             this.drawMap(); // BG
             this.drawMenu();
@@ -832,6 +903,46 @@ class Game {
         this.renderer.drawText("ITEMS", 160, 190, COLORS.CYAN, 16, 'center');
         this.renderer.drawText(`Potion: ${this.player.items.potion}`, 60, 220, COLORS.WHITE);
         this.renderer.drawText("(Press A to Use)", 160, 250, COLORS.GRAY, 12, 'center');
+
+    }
+
+    drawCharSelect() {
+        this.renderer.clear();
+
+        // Title
+        this.renderer.drawText("CHOOSE YOUR HERO", 160, 60, COLORS.YELLOW, 20, 'center');
+
+        // Characters
+        const spacing = 70;
+        const startX = (GAME_WIDTH - (this.availableChars.length * spacing)) / 2 + 20;
+
+        this.availableChars.forEach((char, i) => {
+            const x = startX + i * spacing;
+            const y = 140;
+            const size = 50;
+            const isSelected = (i === this.charSelectIndex);
+
+            // Draw Selection Box
+            if (isSelected) {
+                this.renderer.strokeRect(x - 5, y - 5, size + 10, size + 10, COLORS.CYAN);
+                // Arrow
+                this.renderer.drawText("▼", x + size / 2, y - 15, COLORS.CYAN, 14, 'center');
+            }
+
+            // Draw Sprite (Larger)
+            const spriteKey = 'PLAYER_' + char;
+            this.renderer.drawSprite(SPRITES[spriteKey], x, y, size, size);
+
+            // Name
+            this.renderer.drawText(char, x + size / 2, y + 65, isSelected ? COLORS.WHITE : COLORS.GRAY, 10, 'center');
+        });
+
+        // Current Description
+        // this.renderer.drawText("Tap or Key to Select", 160, 220, COLORS.GRAY, 12, 'center');
+
+        // OK Button
+        this.renderer.strokeRect(110, 240, 100, 40, COLORS.GREEN);
+        this.renderer.drawText("START", 160, 265, COLORS.WHITE, 20, 'center');
     }
 
     drawBattle() {
@@ -935,7 +1046,9 @@ class Game {
     }
 
     drawPlayer() {
-        this.renderer.drawSprite(SPRITES.PLAYER, this.player.x * 32, this.player.y * 32, 32, 32);
+        // Use selected character sprite
+        const spriteKey = 'PLAYER_' + (this.player.char || 'BOY');
+        this.renderer.drawSprite(SPRITES[spriteKey] || SPRITES.PLAYER_BOY, this.player.x * 32, this.player.y * 32, 32, 32);
     }
 
     drawTitle() {
@@ -957,7 +1070,7 @@ class Game {
 
         // 3. Draw Large Decorative Sprites
         // Player on Left
-        this.renderer.drawSprite(SPRITES.PLAYER, 40, 120, 80, 80);
+        this.renderer.drawSprite(SPRITES.PLAYER_BOY, 40, 120, 80, 80);
         // Enemy on Right
         this.renderer.drawSprite(SPRITES.ENEMY, 200, 120, 80, 80);
 
@@ -979,20 +1092,27 @@ class Game {
                 this.renderer.drawText("- TAP TO START -", 160, 220, COLORS.YELLOW, 20, 'center');
             }
         } else {
+
             // "GAME START" Button
-            const x = 60, y = 240, w = 200, h = 50;
+            const bx = 60, by = 230, bw = 200, bh = 40;
+            const cx = 60, cy = 280, cw = 200, ch = 40;
 
-            // Button Box
+            // Start Button
             this.renderer.ctx.fillStyle = '#222';
-            this.renderer.ctx.fillRect(x, y, w, h);
-            this.renderer.strokeRect(x, y, w, h, COLORS.GREEN);
+            this.renderer.ctx.fillRect(bx, by, bw, bh);
+            this.renderer.strokeRect(bx, by, bw, bh, COLORS.GREEN);
 
-            // Button Text
             if (Math.floor(this.blinkTimer / 300) % 2 === 0) {
-                this.renderer.drawText("GAME START", 160, 275, COLORS.YELLOW, 28, 'center');
+                this.renderer.drawText("GAME START", 160, by + 28, COLORS.YELLOW, 24, 'center');
             } else {
-                this.renderer.drawText("GAME START", 160, 275, COLORS.WHITE, 28, 'center');
+                this.renderer.drawText("GAME START", 160, by + 28, COLORS.WHITE, 24, 'center');
             }
+
+            // Character Select Button
+            this.renderer.ctx.fillStyle = '#222';
+            this.renderer.ctx.fillRect(cx, cy, cw, ch);
+            this.renderer.strokeRect(cx, cy, cw, ch, COLORS.CYAN);
+            this.renderer.drawText("CHARACTERS", 160, cy + 28, COLORS.WHITE, 20, 'center');
         }
 
         this.renderer.drawText("© 2026 ENGLISH DUNGEON", 160, 310, COLORS.GRAY, 10, 'center');
