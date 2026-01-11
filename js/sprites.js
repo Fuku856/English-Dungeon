@@ -48,6 +48,7 @@ const SPRITES = {
         "     YYY  YYY     ",
         "    YYYYYYYYYY    ",
         "    Y B YY B Y    ",
+        "    Y B YY B Y    ",
         "    YYYYYYYYYY    ",
         "     YY PP YY     ",
         "      YYYYYY      ",
@@ -58,8 +59,7 @@ const SPRITES = {
         "    YYYYYYYYYYY   ",
         "    Y Y    Y Y    ",
         "    Y Y    Y Y    ",
-        "    W W    W W    ",
-        "                  "
+        "    W W    W W    "
     ],
     PLAYER_RABBIT: [
         "     PP    PP     ",
@@ -67,6 +67,7 @@ const SPRITES = {
         "     WW    WW     ",
         "     WW    WW     ",
         "    WWWWWWWWWW    ",
+        "    W B WW B W    ",
         "    W B WW B W    ",
         "    WWWWWWWWWW    ",
         "     WW P WW      ",
@@ -76,8 +77,7 @@ const SPRITES = {
         "    WWWWWWWWWW    ",
         "    W W    W W    ",
         "    W W    W W    ",
-        "    W W    W W    ",
-        "                  "
+        "    W W    W W    "
     ],
     WALL: [
         "########",

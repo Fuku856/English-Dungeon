@@ -74,6 +74,6 @@ const conversationList = [
     { q: "How are you?", options: ["I'm fine, thank you.", "Yes, I am.", "You're welcome."], ans: 0 },
     { q: "May I help you?", options: ["No, thank you.", "Yes, please.", "I'm sorry."], ans: 1 },
     { q: "Nice to meet you.", options: ["See you.", "Nice to meet you, too.", "Good luck."], ans: 1 },
-    { q: "Thank you very much.", options: ["You're welcome.", "No problem.", "I agree."], ans: 0 },
+    { q: "Thank you very much.", options: ["You're welcome.", "No thank you.", "I agree."], ans: 0 },
     { q: "What time is it?", options: ["It's 10 o'clock.", "I have time.", "It's Sunday."], ans: 0 }
 ];

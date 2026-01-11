@@ -692,7 +692,9 @@ class Game {
                 break;
             case 'D': // Echo
                 q = randElem(listeningList);
-                this.battle.data = { ...q, played: false };
+                // Shuffle options to prevent answer from always being first
+                const shuffledOptions = shuffle([...q.options]);
+                this.battle.data = { ...q, options: shuffledOptions, played: false };
                 this.setMessage(`[ECHO] LISTEN! (Tap 'A')`);
                 break;
             case 'E': // Talk
