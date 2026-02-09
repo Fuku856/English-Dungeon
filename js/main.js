@@ -318,11 +318,51 @@ class Renderer {
         this.ctx.fillRect(0, 0, this.width, this.height);
     }
 
-    drawText(text, x, y, color = COLORS.WHITE, size = 16, align = 'left') {
+    drawText(text, x, y, color = COLORS.WHITE, size = 16, align = 'left', maxWidth = null) {
         this.ctx.fillStyle = color;
         this.ctx.font = `${size}px '${getComputedStyle(document.body).getPropertyValue('--font-main').replace(/['"]/g, "")}'`;
         this.ctx.textAlign = align;
+
+        if (maxWidth) {
+            const metrics = this.ctx.measureText(text);
+            if (metrics.width > maxWidth) {
+                const scale = maxWidth / metrics.width;
+                this.ctx.save();
+                this.ctx.translate(x, y);
+                this.ctx.scale(scale, 1);
+                this.ctx.fillText(text, 0, 0);
+                this.ctx.restore();
+                return;
+            }
+        }
         this.ctx.fillText(text, x, y);
+    }
+
+    drawWrappedText(text, x, y, color, size, align, maxWidth, lineHeight) {
+        this.ctx.fillStyle = color;
+        this.ctx.font = `${size}px '${getComputedStyle(document.body).getPropertyValue('--font-main').replace(/['"]/g, "")}'`;
+        this.ctx.textAlign = align;
+
+        const words = text.split(' ');
+        let line = '';
+        const lines = [];
+
+        for (let n = 0; n < words.length; n++) {
+            const testLine = line + words[n] + ' ';
+            const metrics = this.ctx.measureText(testLine);
+            const testWidth = metrics.width;
+            if (testWidth > maxWidth && n > 0) {
+                lines.push(line);
+                line = words[n] + ' ';
+            } else {
+                line = testLine;
+            }
+        }
+        lines.push(line);
+
+        lines.forEach((l, i) => {
+            this.ctx.fillText(l, x, y + i * lineHeight);
+        });
     }
 
     drawRect(x, y, w, h, color) {
@@ -935,8 +975,9 @@ class Game {
         if (this.input.justTouched) {
             const pool = this.battle.data.pool;
             for (let i = 0; i < pool.length; i++) {
+                // Layout adjustment: Start higher (170 instead of 180), smaller step (35 instead of 40)
                 const x = 20 + (i % 3) * 100;
-                const y = 180 + Math.floor(i / 3) * 40;
+                const y = 170 + Math.floor(i / 3) * 35;
                 if (this.checkButton(x, y, 90, 30)) {
                     const word = pool[i];
                     this.battle.data.current.push(word);
@@ -1159,20 +1200,27 @@ class Game {
                 break;
             case 'B': // Shield
                 const qB = this.battle.data.q.replace("___", "___");
-                this.renderer.drawText(qB, 20, 135, COLORS.WHITE, 14);
+                // Moved up to 125 to allow 2 lines of text
+                this.renderer.drawWrappedText(qB, 20, 125, COLORS.WHITE, 14, 'left', 280, 18);
                 this.battle.data.options.forEach((opt, i) => {
                     this.renderer.strokeRect(40, 155 + i * 35, 240, 30, COLORS.GREEN);
-                    this.renderer.drawText(opt, 160, 175 + i * 35, COLORS.WHITE, 16, 'center');
+                    this.renderer.drawText(opt, 160, 175 + i * 35, COLORS.WHITE, 16, 'center', 220);
                 });
                 break;
             case 'C': // Magic
-                this.renderer.drawText(this.battle.data.jp, 160, 130, COLORS.WHITE, 16, 'center');
-                this.renderer.drawText(this.battle.data.current.join(" "), 160, 160, COLORS.CYAN, 14, 'center');
+                // Updated layout: Y moved up.
+                this.renderer.drawText(this.battle.data.jp, 160, 128, COLORS.WHITE, 16, 'center', 300);
+
+                // Current Answer Buffer - Scaled
+                this.renderer.drawText(this.battle.data.current.join(" "), 160, 150, COLORS.CYAN, 14, 'center', 300);
+
+                // Buttons Grid
                 this.battle.data.pool.forEach((word, i) => {
                     const x = 20 + (i % 3) * 100;
-                    const y = 190 + Math.floor(i / 3) * 40;
+                    const y = 170 + Math.floor(i / 3) * 35;
                     this.renderer.strokeRect(x, y, 90, 30, COLORS.PINK);
-                    this.renderer.drawText(word, x + 45, y + 20, COLORS.WHITE, 12, 'center');
+                    // Scale text to fit button (max width ~80px padding)
+                    this.renderer.drawText(word, x + 45, y + 20, COLORS.WHITE, 12, 'center', 80);
                 });
                 break;
             case 'D': // Echo
@@ -1181,15 +1229,17 @@ class Game {
                 } else {
                     this.battle.data.options.forEach((opt, i) => {
                         this.renderer.strokeRect(40, 155 + i * 35, 240, 30, COLORS.CYAN);
-                        this.renderer.drawText(opt, 160, 175 + i * 35, COLORS.WHITE, 16, 'center');
+                        this.renderer.drawText(opt, 160, 175 + i * 35, COLORS.WHITE, 16, 'center', 220);
                     });
                 }
                 break;
             case 'E': // Talk
-                this.renderer.drawText(this.battle.data.q, 20, 130, COLORS.YELLOW, 14);
+                // Wrapped text for question
+                this.renderer.drawWrappedText(this.battle.data.q, 20, 125, COLORS.YELLOW, 14, 'left', 280, 18);
+
                 this.battle.data.options.forEach((opt, i) => {
                     this.renderer.strokeRect(20, 155 + i * 45, 280, 40, COLORS.GREEN);
-                    this.renderer.drawText(opt, 30, 180 + i * 45, COLORS.WHITE, 12, 'left');
+                    this.renderer.drawText(opt, 30, 180 + i * 45, COLORS.WHITE, 12, 'left', 260); // Max width 260
                 });
                 break;
         }
