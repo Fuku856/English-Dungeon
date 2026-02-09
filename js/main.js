@@ -391,6 +391,95 @@ class Game {
         this.blinkTimer = 0;
     }
 
+    saveData() {
+        const data = {
+            player: this.player,
+            floor: this.floor,
+            map: this.map,
+            timestamp: new Date().toISOString()
+        };
+        localStorage.setItem('englishDungeonSave', JSON.stringify(data));
+        this.setMessage("GAME SAVED!");
+        this.audio.playHeal();
+    }
+
+    loadData() {
+        const json = localStorage.getItem('englishDungeonSave');
+        if (!json) {
+            this.setMessage("NO SAVE DATA!");
+            this.audio.playWrong();
+            return false;
+        }
+        try {
+            const data = JSON.parse(json);
+            this.player = data.player;
+            this.floor = data.floor;
+            this.map = data.map;
+            this.setMessage("GAME LOADED!");
+            this.audio.playHeal();
+            return true;
+        } catch (e) {
+            console.error(e);
+            this.setMessage("LOAD FAILED!");
+            this.audio.playWrong();
+            return false;
+        }
+    }
+
+    exportData() {
+        const data = {
+            player: this.player,
+            floor: this.floor,
+            map: this.map,
+            timestamp: new Date().toISOString()
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `english_dungeon_save_${new Date().toISOString().slice(0, 10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        this.setMessage("EXPORTED SAVE FILE!");
+        this.audio.playHeal();
+    }
+
+    importData() {
+        const input = document.getElementById('import-file');
+        if (!input) return;
+
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const data = JSON.parse(event.target.result);
+                    if (!data.player || !data.floor || !data.map) throw new Error("Invalid Save Data");
+
+                    this.player = data.player;
+                    this.floor = data.floor;
+                    this.map = data.map;
+
+                    this.state = 'EXPLORE';
+                    this.toggleControls(true);
+                    this.audio.startBgm('dungeon');
+                    this.setMessage("IMPORTED GAME!");
+                    this.audio.playHeal();
+                } catch (err) {
+                    console.error(err);
+                    this.setMessage("IMPORT FAILED!");
+                    this.audio.playWrong();
+                }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
+    }
+
     start() {
         this.input.init();
         this.generateMap();
@@ -433,16 +522,28 @@ class Game {
             } else {
                 // Main Title Menu
                 if (this.input.justTouched) {
-                    // "GAME START" button (Top)
-                    if (this.checkButton(60, 210, 200, 40)) { // Moved up from 230
+                    // "GAME START" (160)
+                    if (this.checkButton(60, 160, 200, 30)) {
                         this.audio.playSelect();
-                        this.state = 'EXPLORE'; // Quick Start
+                        this.state = 'EXPLORE';
                         this.toggleControls(true);
                         this.audio.startBgm('dungeon');
                         this.setMessage("DUNGEON START! Floor 1");
                     }
-                    // "CHARACTERS" button (Bottom)
-                    else if (this.checkButton(60, 260, 200, 40)) { // Moved up from 280
+                    // "LOAD GAME" (200)
+                    else if (this.checkButton(60, 200, 200, 30)) {
+                        if (this.loadData()) {
+                            this.state = 'EXPLORE';
+                            this.toggleControls(true);
+                            this.audio.startBgm('dungeon');
+                        }
+                    }
+                    // "IMPORT" (240)
+                    else if (this.checkButton(60, 240, 200, 30)) {
+                        this.importData();
+                    }
+                    // "CHARACTERS" (280)
+                    else if (this.checkButton(60, 280, 200, 30)) {
                         this.audio.playSelect();
                         this.state = 'CHAR_SELECT';
                         this.toggleControls(true);
@@ -567,8 +668,16 @@ class Game {
         }
 
         if (this.input.justTouched) {
-            // Main Menu Button
-            if (this.checkButton(60, 245, 200, 30)) {
+            // SAVE (190)
+            if (this.checkButton(60, 190, 200, 25)) {
+                this.saveData();
+            }
+            // EXPORT (220)
+            else if (this.checkButton(60, 220, 200, 25)) {
+                this.exportData();
+            }
+            // Main Menu Button (250)
+            else if (this.checkButton(60, 250, 200, 25)) {
                 this.audio.playCancel();
                 this.state = 'TITLE';
                 this.audio.startBgm('title');
@@ -914,19 +1023,30 @@ class Game {
         this.renderer.ctx.fillRect(40, 40, 240, 240);
         this.renderer.strokeRect(40, 40, 240, 240, COLORS.WHITE);
 
-        this.renderer.drawText("STATUS", 160, 70, COLORS.CYAN, 20, 'center');
-        this.renderer.drawText(`LV: ${this.player.level}`, 60, 100, COLORS.WHITE);
-        this.renderer.drawText(`HP: ${this.player.hp} / ${this.player.maxHp}`, 60, 120, COLORS.WHITE);
-        this.renderer.drawText(`EXP: ${this.player.exp} / ${this.player.nextExp}`, 60, 140, COLORS.WHITE);
-        this.renderer.drawText(`ATK: ${this.player.atk}`, 60, 160, COLORS.WHITE);
+        // Status (Compact)
+        this.renderer.drawText("STATUS", 160, 60, COLORS.CYAN, 16, 'center');
+        this.renderer.drawText(`LV: ${this.player.level}`, 60, 80, COLORS.WHITE);
+        this.renderer.drawText(`HP: ${this.player.hp}/${this.player.maxHp}`, 160, 80, COLORS.WHITE);
+        this.renderer.drawText(`EXP: ${this.player.exp}/${this.player.nextExp}`, 60, 100, COLORS.WHITE);
+        this.renderer.drawText(`ATK: ${this.player.atk}`, 160, 100, COLORS.WHITE);
 
-        this.renderer.drawText("ITEMS", 160, 190, COLORS.CYAN, 16, 'center');
-        this.renderer.drawText(`Potion: ${this.player.items.potion}`, 60, 215, COLORS.WHITE);
-        this.renderer.drawText("(Press A to Use)", 160, 235, COLORS.GRAY, 12, 'center');
+        // Items
+        this.renderer.drawText("ITEMS", 160, 125, COLORS.CYAN, 16, 'center');
+        this.renderer.drawText(`Potion: ${this.player.items.potion}`, 160, 145, COLORS.WHITE, 14, 'center');
+        this.renderer.drawText("(Press A to Use)", 160, 165, COLORS.GRAY, 10, 'center');
+
+        // Buttons
+        // SAVE
+        this.renderer.strokeRect(60, 190, 200, 25, COLORS.GREEN);
+        this.renderer.drawText("SAVE GAME", 160, 208, COLORS.WHITE, 14, 'center');
+
+        // EXPORT
+        this.renderer.strokeRect(60, 220, 200, 25, COLORS.YELLOW);
+        this.renderer.drawText("EXPORT DATA", 160, 238, COLORS.WHITE, 14, 'center');
 
         // Main Menu Button
-        this.renderer.strokeRect(60, 245, 200, 30, COLORS.RED);
-        this.renderer.drawText("MAIN MENU", 160, 265, COLORS.WHITE, 16, 'center');
+        this.renderer.strokeRect(60, 250, 200, 25, COLORS.RED);
+        this.renderer.drawText("MAIN MENU", 160, 268, COLORS.WHITE, 14, 'center');
     }
 
     drawCharSelect() {
@@ -1117,25 +1237,23 @@ class Game {
         } else {
 
             // "GAME START" Button
-            const bx = 60, by = 210, bw = 200, bh = 40; // Moved up 20px
-            const cx = 60, cy = 260, cw = 200, ch = 40; // Moved up 20px
+            const bx = 60, bw = 200, bh = 30;
 
-            // Start Button
-            this.renderer.ctx.fillStyle = '#222';
-            this.renderer.ctx.fillRect(bx, by, bw, bh);
-            this.renderer.strokeRect(bx, by, bw, bh, COLORS.GREEN);
+            // START (160)
+            this.renderer.strokeRect(bx, 160, bw, bh, COLORS.GREEN);
+            this.renderer.drawText("GAME START", 160, 160 + 20, COLORS.WHITE, 16, 'center');
 
-            if (Math.floor(this.blinkTimer / 300) % 2 === 0) {
-                this.renderer.drawText("GAME START", 160, by + 28, COLORS.YELLOW, 24, 'center');
-            } else {
-                this.renderer.drawText("GAME START", 160, by + 28, COLORS.WHITE, 24, 'center');
-            }
+            // LOAD (200)
+            this.renderer.strokeRect(bx, 200, bw, bh, COLORS.CYAN);
+            this.renderer.drawText("LOAD GAME", 160, 200 + 20, COLORS.WHITE, 16, 'center');
 
-            // Character Select Button
-            this.renderer.ctx.fillStyle = '#222';
-            this.renderer.ctx.fillRect(cx, cy, cw, ch);
-            this.renderer.strokeRect(cx, cy, cw, ch, COLORS.CYAN);
-            this.renderer.drawText("CHARACTERS", 160, cy + 28, COLORS.WHITE, 20, 'center');
+            // IMPORT (240)
+            this.renderer.strokeRect(bx, 240, bw, bh, COLORS.YELLOW);
+            this.renderer.drawText("IMPORT SAVE", 160, 240 + 20, COLORS.WHITE, 16, 'center');
+
+            // CHARACTERS (280)
+            this.renderer.strokeRect(bx, 280, bw, bh, COLORS.PINK);
+            this.renderer.drawText("CHARACTERS", 160, 280 + 20, COLORS.WHITE, 16, 'center');
         }
 
         this.renderer.drawText("© 2026 ENGLISH DUNGEON", 160, 310, COLORS.GRAY, 10, 'center');
