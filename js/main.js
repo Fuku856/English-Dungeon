@@ -742,9 +742,30 @@ class Game {
         }
     }
 
-    setMessage(text) {
+    setMessage(text, color = 'white') {
         const el = document.getElementById('message-text');
-        if (el) el.innerText = text;
+        if (el) {
+            el.innerText = text;
+            el.style.color = color;
+        }
+    }
+
+    getCorrectAnswerString() {
+        if (!this.battle || !this.battle.data) return "";
+        switch (this.battle.type) {
+            case 'A': // Slash
+                return this.battle.data.jp;
+            case 'B': // Shield
+                return this.battle.data.ans;
+            case 'C': // Magic
+                return this.battle.data.words.join(' ');
+            case 'D': // Echo
+                return this.battle.data.text;
+            case 'E': // Talk
+                return this.battle.data.options[this.battle.data.ans];
+            default:
+                return "";
+        }
     }
 
     /* --- BATTLE SYSTEM --- */
@@ -988,7 +1009,8 @@ class Game {
     battleLose(msg) {
         this.battle.phase = 'LOSE';
         this.audio.playDamage();
-        this.setMessage(msg + " (Damage!)");
+        const ans = this.getCorrectAnswerString();
+        this.setMessage(msg + ` Ans: ${ans}`, '#ff4444');
     }
 
     draw() {
