@@ -427,6 +427,11 @@ class Game {
         this.map = [];
         this.floor = 1;
         this.battle = null;
+        this.boss = {
+            active: false,
+            requiredWins: 0,
+            currentWins: 0
+        };
         this.audioInitialized = false;
         this.blinkTimer = 0;
     }
@@ -618,6 +623,24 @@ class Game {
         else if (this.state === 'BATTLE') {
             this.updateBattle(dt);
         }
+        else if (this.state === 'GAMECLEAR') {
+            if (this.input.justTouched) {
+                // Return to Title
+                if (this.checkButton(80, 260, 160, 40)) {
+                    this.audio.playSelect();
+                    this.state = 'TITLE';
+                    this.audio.startBgm('title');
+                    this.toggleControls(false);
+                    // Reset Game Data
+                    this.player.level = 1;
+                    this.player.hp = 100; this.player.maxHp = 100;
+                    this.player.exp = 0; this.player.nextExp = 50;
+                    this.player.items = { potion: 3, dictionary: 0 };
+                    this.floor = 1;
+                    this.generateMap();
+                }
+            }
+        }
         else if (this.state === 'GAMEOVER') {
             if (this.input.justTouched) {
                 // Retry Button (Top)
@@ -678,10 +701,12 @@ class Game {
                 this.audio.playStep();
                 moved = true;
                 if (this.map[ny][nx] === 2) {
-                    this.audio.playWin();
-                    this.setMessage("NEXT FLOOR!");
-                    this.player.x = 1; this.player.y = 1; this.floor++;
-                    this.generateMap();
+                    // Check for Boss Floor
+                    if ([5, 8, 10].includes(this.floor)) {
+                        this.startBossBattle();
+                    } else {
+                        this.nextFloor();
+                    }
                 }
             }
         }
@@ -839,6 +864,26 @@ class Game {
         this.initBattleData(type);
     }
 
+    startBossBattle() {
+        this.boss.active = true;
+        this.boss.currentWins = 0;
+        if (this.floor === 5) this.boss.requiredWins = 3;
+        else if (this.floor === 8) this.boss.requiredWins = 5;
+        else if (this.floor === 10) this.boss.requiredWins = 7;
+
+        this.setMessage(`BOSS BATTLE! Win ${this.boss.requiredWins} times!`);
+        setTimeout(() => {
+            this.startBattle();
+        }, 1500);
+    }
+
+    nextFloor() {
+        this.audio.playWin();
+        this.setMessage("NEXT FLOOR!");
+        this.player.x = 1; this.player.y = 1; this.floor++;
+        this.generateMap();
+    }
+
     initBattleData(type) {
         let q;
         switch (type) {
@@ -917,9 +962,17 @@ class Game {
                         this.audio.playExplosion();
                         this.setMessage("GAME OVER...");
                     } else {
-                        this.state = 'EXPLORE';
-                        this.audio.startBgm('dungeon'); // Resume Dungeon BGM
-                        this.setMessage(`Escaped... HP:${this.player.hp}`);
+                        // If Boss Battle, continue even if lost (just took damage)
+                        if (this.boss.active) {
+                            this.setMessage(`Ouch! Boss HP: ${this.boss.requiredWins - this.boss.currentWins}`);
+                            setTimeout(() => {
+                                this.startBattle(); // Next round of boss
+                            }, 1500);
+                        } else {
+                            this.state = 'EXPLORE';
+                            this.audio.startBgm('dungeon'); // Resume Dungeon BGM
+                            this.setMessage(`Escaped... HP:${this.player.hp}`);
+                        }
                     }
                 }
             }
@@ -1054,7 +1107,35 @@ class Game {
     battleWin(msg) {
         this.battle.phase = 'WIN';
         this.audio.playWin();
-        this.setMessage(msg + " (Win!)");
+
+        if (this.boss.active) {
+            this.boss.currentWins++;
+            const remaining = this.boss.requiredWins - this.boss.currentWins;
+            if (remaining <= 0) {
+                this.setMessage("BOSS DEFEATED!!");
+                setTimeout(() => {
+                    this.boss.active = false;
+                    if (this.floor === 10) {
+                        this.state = 'GAMECLEAR';
+                        this.toggleControls(false);
+                        this.audio.stopBgm(); // Create a victory bgm?
+                        this.audio.playWin(); // Play win sound again or loop it?
+                        this.setMessage("CONGRATULATIONS!");
+                    } else {
+                        this.nextFloor();
+                        this.state = 'EXPLORE';
+                        this.audio.startBgm('dungeon');
+                    }
+                }, 2000);
+            } else {
+                this.setMessage(`${msg} (Boss HP: ${remaining})`);
+                setTimeout(() => {
+                    this.startBattle(); // Next round
+                }, 1500);
+            }
+        } else {
+            this.setMessage(msg + " (Win!)");
+        }
     }
 
     battleLose(msg) {
@@ -1083,10 +1164,9 @@ class Game {
         } else if (this.state === 'BATTLE') {
             this.drawBattle();
         } else if (this.state === 'GAMEOVER') {
-            // Draw last state in background?
-            // this.drawBattle(); or this.drawMap();
-            // Let's just clear for now or draw static
             this.drawGameOver();
+        } else if (this.state === 'GAMECLEAR') {
+            this.drawGameClear();
         }
     }
 
@@ -1358,6 +1438,23 @@ class Game {
         const mx = 80, my = 260, mw = 160, mh = 40;
         this.renderer.strokeRect(mx, my, mw, mh, COLORS.GRAY);
         this.renderer.drawText("MAIN MENU", 160, 288, COLORS.WHITE, 20, 'center');
+    }
+
+    drawGameClear() {
+        // Semi-transparent overlay
+        this.renderer.ctx.fillStyle = 'rgba(0,0,0,0.8)';
+        this.renderer.ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+        this.renderer.drawText("CONGRATULATIONS!", 160, 80, COLORS.YELLOW, 24, 'center');
+        this.renderer.drawText("YOU CLEARED THE DUNGEON!", 160, 110, COLORS.WHITE, 14, 'center');
+
+        this.renderer.drawText(`Final Level: ${this.player.level}`, 160, 150, COLORS.CYAN, 16, 'center');
+        this.renderer.drawText(`Final HP: ${this.player.hp}`, 160, 170, COLORS.CYAN, 16, 'center');
+
+        // Menu Button
+        const mx = 80, my = 260, mw = 160, mh = 40;
+        this.renderer.strokeRect(mx, my, mw, mh, COLORS.GREEN);
+        this.renderer.drawText("RETURN TO TITLE", 160, 288, COLORS.WHITE, 16, 'center');
     }
 
     toggleControls(visible) {
