@@ -624,13 +624,23 @@ class Game {
                 if (this.checkButton(80, 200, 160, 40)) { // Retry
                     this.audio.playSelect();
                     this.state = 'EXPLORE';
-                    this.player.hp = this.player.maxHp; // Restore HP
-                    // Optional: Reset position to start of floor? Or just stay?
-                    // Let's reset to start for fairness
-                    this.player.x = 1; this.player.y = 1;
+
+                    // Full Reset
+                    this.player.level = 1;
+                    this.player.hp = 100;
+                    this.player.maxHp = 100;
+                    this.player.atk = 10;
+                    this.player.exp = 0;
+                    this.player.nextExp = 50;
+                    this.player.items = { potion: 3, dictionary: 0 };
+                    this.floor = 1;
+                    this.generateMap();
+
+                    this.player.x = 1;
+                    this.player.y = 1;
                     this.toggleControls(true);
                     this.audio.startBgm('dungeon');
-                    this.setMessage("TRY AGAIN!");
+                    this.setMessage("DUNGEON START! Floor 1");
                 }
                 // Main Menu Button (Bottom)
                 else if (this.checkButton(80, 260, 160, 40)) { // Menu
